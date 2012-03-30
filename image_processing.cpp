@@ -4,24 +4,6 @@
 #include <array>
 #include <cassert>
 
-enum class COLOR_SPACE {
-    HSL,
-    HSI,
-    HSV,
-    RGB
-};
-    
-
-typedef std::array<guint8, 3> color;
-
-static inline color make_color(guint8 a, guint8 b, guint8 c) {
-    color ret;
-    ret[0] = a;
-    ret[1] = b;
-    ret[2] = c;
-    return ret;
-}
-
 guint8 get_hue(color rgb) {
     long hue;
     long rgb_max = std::max(std::max(rgb[0], rgb[1]), rgb[2]);
@@ -121,11 +103,11 @@ bool is_in_range(guint8 * pixel, color l, color h, COLOR_SPACE space) {
     return
     (
         ( //hue
-            ((l[0] < h[0]) && ( //low < high -> and
+            ((l[0] < h[0]) && ( //low < high
                 (c[0] >= l[0]) && (c[0] <= h[0])
             ))
             ||
-            ((l[0] <= h[0]) && !( //low > high -> or
+            ((l[0] >= h[0]) && ( //low > high
                 (c[0] >= l[0]) || (c[0] <= h[0])
             ))
         )
