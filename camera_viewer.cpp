@@ -10,11 +10,13 @@
 #include <chrono>
 #include <vector>
 
-const char URL[] = "http://10.6.12.11/mjpg/video.mjpg";
+jpeg2pixbuf& camera_viewer::transport() {
+    return *trans;
+}
 
-camera_viewer::camera_viewer(const char * url, stream_handler::data_sink s,
-    stream_handler::end_notifier n) : stream_handle(s, n)
-{
+camera_viewer::camera_viewer(const char * url) {
+    trans = std::unique_ptr<jpeg2pixbuf>(new jpeg2pixbuf);
+    stream_handle = std::unique_ptr<stream_handler>(new mjpeg_stream_handler(*trans, "--myboundary\r\n"));
 	curl_handle = std::unique_ptr<CURL, CURL_deleter>(curl_easy_init());
 	curl_easy_setopt(curl_handle.get(), CURLOPT_URL, url);
 	//full debug
@@ -37,25 +39,12 @@ camera_viewer::~camera_viewer() {
 	curl_multi_remove_handle(set.get(), curl_handle.get());
 }
 
-int camera_viewer::recieve() {
+int camera_viewer::receive() {
 	if (remaining > 0) {
 		curl_multi_perform(set.get(), &remaining);
 	}
-	return remaining;
-}
-
-void camera_thread(image_transport& trans) {
-    while (true) { //constantly loop trying to reestablish connection
-        camera_viewer view(URL, [&trans](const char * c, size_t s) {
-            trans.image_write((const guint8*)c, s);
-        },
-        [&trans]() {
-            trans.close_image();
-        } );
-        while (view.recieve()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-        }
-        trans.lost_comm();
-        std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    else {
+        trans->lost_comm();
     }
+	return remaining;
 }

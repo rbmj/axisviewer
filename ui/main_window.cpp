@@ -2,8 +2,9 @@
 #include "../camera_viewer.h"
 #include "../image_processing.h"
 
-#include <thread>
 #include <stdexcept>
+
+const char URL[] = "http://10.6.12.11/mjpg/video.mjpg";
 
 options_widget::options_widget() {
     spinbuttons = new Gtk::SpinButton[6];
@@ -75,8 +76,10 @@ Gtk::Widget& options_widget::widget() {
 }
     
 bool main_window::idle_func() {
-    if (trans.new_image()) {
-        picture = trans.get_image(); //smart pointer
+    //update mjpeg stream
+    view->receive();
+    if (view->transport().new_image()) {
+        picture = view->transport().get_image(); //smart pointer
         //now we have shared ownership - we will have sole ownership when
         //trans gets a new image
         processed_picture = picture->copy();
@@ -92,14 +95,14 @@ bool main_window::idle_func() {
 }
 
 bool main_window::have_comm() {
-    return trans.has_comm();
+    return view->transport().has_comm();
 }
 
 main_window::main_window() :
-    transport_thread(camera_thread, std::ref(trans)),
     img_frame("Images"),
     opt_frame("Processing Options")
 {
+    view = std::unique_ptr<camera_viewer>(new camera_viewer("http://10.6.12.11/mjpg/video.mjpg"));
     //set border width
     set_border_width(10);
     //setup images

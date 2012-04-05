@@ -13,6 +13,7 @@
 
 #include "image_transport.h"
 #include "../image_processing.h"
+#include "../camera_viewer.h"
 
 class options_widget {
     public:
@@ -49,8 +50,7 @@ protected:
     Gtk::Grid main_window_grid;
     options_widget opts;
 private:
-    image_transport trans;
-    std::thread transport_thread;
+    std::unique_ptr<camera_viewer> view;
 };
     
     

@@ -5,20 +5,28 @@
 #include <string>
 #include <functional>
 
+#include "ui/image_transport.h"
+
 //#include "memory_buffer.h"
 
 class stream_handler {
-public:
-    typedef std::function<void(const char*, size_t)> data_sink;
-    typedef std::function<void()> end_notifier;
-    stream_handler(data_sink, end_notifier);
-	void add_data(const char*, size_t); //const as we need to copy the buffer
-    void process_data();
-	static size_t write(void*, size_t, size_t, void*);
 private:
-    static const char delim[];
-    data_sink sink;
-    end_notifier notifier;
+    image_transport& trans;
+protected:
+    image_transport& transport() { return trans; }
+public:
+    virtual size_t add_data(const char*, size_t) = 0; //need to copy buffer
+    static size_t write(void*, size_t, size_t, void*);
+    stream_handler(image_transport& t) : trans(t) {}
+};
+
+class mjpeg_stream_handler : public stream_handler {
+public:
+    mjpeg_stream_handler(image_transport&, const std::string&);
+	size_t add_data(const char*, size_t); //const as we need to copy the buffer
+    void process_data();
+private:
+    std::string delim;
     std::vector<char> buf;
     std::string content_type;
     size_t content_length;
@@ -30,7 +38,5 @@ private:
     };
     state_t state;
 };
-
-void stream_callback(std::vector<char> v);
 
 #endif

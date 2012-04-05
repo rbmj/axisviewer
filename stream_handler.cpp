@@ -6,28 +6,23 @@
 #include <fstream>
 #include <algorithm>
 
-void stream_callback(std::vector<char> v) {
-    //v is raw jpeg image data
-    static int i = 0;
-    std::ostringstream fname;
-    fname << i++ << ".jpg";
-    std::ofstream o(fname.str().c_str(), std::fstream::binary);
-    o.write(&(v[0]), v.size()*sizeof(v[0]));
-    o.close();
+size_t stream_handler::write(void * ptr, size_t size, size_t nmemb, void * o) {
+	size_t numbytes = size * nmemb;
+	return (((stream_handler*)o)->add_data((const char*)ptr, numbytes));
 }
 
-const char stream_handler::delim[] = "--myboundary\r\n";
-
-stream_handler::stream_handler(data_sink s, end_notifier n) : buf(0x4000) {
-    sink = s;
-    notifier = n;
-    state = SEARCH;
+mjpeg_stream_handler::mjpeg_stream_handler(image_transport& t, const std::string& s) :
+    stream_handler(t), //superclass - add transport
+    delim(s), //delimiter between frames
+    buf(0x4000) //reserve data for buffer
+{
+    state = SEARCH; //start out looking for delim
 }
 
-void stream_handler::process_data() {
+void mjpeg_stream_handler::process_data() {
     if (state == SEARCH) {
         //looking for delim - std::end(delim)-1 so we don't include null terminator
-        auto i = std::search(buf.begin(), buf.end(), std::begin(delim), std::end(delim)-1);
+        auto i = std::search(buf.begin(), buf.end(), delim.begin(), delim.end());
         if (i != buf.end()) {
             buf.erase(buf.begin(), i + (sizeof(delim)/sizeof(delim[0])));
             state = CONTENT_TYPE;
@@ -84,34 +79,35 @@ void stream_handler::process_data() {
     if (state == READ_DATA) {
         //read in data
         if (buf.size() >= content_length) {
-            sink((const char*)&(buf[0]), content_length);
+            transport().add_data((const char*)&(buf[0]), content_length);
             state = SEARCH;
             buf.erase(buf.begin(), buf.begin() + content_length);
             content_length = 0;
-            notifier();
+            transport().end_frame();
             process_data();
         }
         else {
             content_length -= buf.size();
-            sink((const char*)&(buf[0]), buf.size());
+            transport().add_data((const char*)&(buf[0]), buf.size());
             buf.clear();
         }
     }
 }
 
-void stream_handler::add_data(const char * data, size_t len) {
+size_t mjpeg_stream_handler::add_data(const char * data, size_t len) {
 	if (state == READ_DATA) {
         if (len >= content_length) {
-            sink(data, content_length);
+            transport().add_data(data, content_length);
+            auto ret = content_length;
             data += content_length;
             len -= content_length;
             content_length = 0;
-            notifier();
+            transport().end_frame();
             state = SEARCH;
-            return add_data(data, len);
+            return (ret + add_data(data, len));
         }
         else {
-            sink(data, len);
+            transport().add_data(data, len);
             content_length -= len;
         }
     }
@@ -119,10 +115,5 @@ void stream_handler::add_data(const char * data, size_t len) {
         buf.insert(buf.end(), data, data + len);
         process_data();
     }
-}
-
-size_t stream_handler::write(void * ptr, size_t size, size_t nmemb, void * handle) {
-	size_t numbytes = size * nmemb;
-	((stream_handler*)handle)->add_data((const char*)ptr, numbytes);
-	return numbytes;
+    return len;
 }

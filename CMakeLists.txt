@@ -15,8 +15,8 @@ add_executable(axisviewer ${SOURCES})
 
 #dependencies
 if(${PKG_CONFIG_FOUND})
-	#use pkg-config
-	pkg_check_modules(CURL REQUIRED libcurl) #try again, this time with REQUIRED
+	#use pkg-config if available
+	pkg_check_modules(CURL REQUIRED libcurl)
 	pkg_check_modules(GTKMM REQUIRED gtkmm-3.0)
 	include_directories(${GTKMM_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
 	target_link_libraries(axisviewer ${GTKMM_LIBRARIES} ${CURL_LIBRARIES})

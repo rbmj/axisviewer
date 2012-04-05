@@ -2,16 +2,25 @@
 
 #include <iostream>
 
-image_transport::image_transport() {
+jpeg2pixbuf::jpeg2pixbuf() {
     comm = false;
     isnew = false;
     loader = Gdk::PixbufLoader::create();
 }
 
-void image_transport::image_write(const guint8 * buf, size_t len) {
+jpeg2pixbuf::~jpeg2pixbuf() {
+    try {
+        loader->close();
+    }
+    catch (...) {
+        //
+    }
+}
+
+void jpeg2pixbuf::add_data(const char * buf, size_t len) {
     comm = true;
     try {
-        loader->write(buf, len);
+        loader->write((const guint8*)buf, len);
     }
     catch (Gdk::PixbufError & e) {
         auto c = e.code();
@@ -36,7 +45,7 @@ void image_transport::image_write(const guint8 * buf, size_t len) {
     }
 }
 
-void image_transport::close_image() {
+void jpeg2pixbuf::end_frame() {
     comm = true;
     try {
         loader->close();
@@ -49,7 +58,7 @@ void image_transport::close_image() {
     loader = Gdk::PixbufLoader::create();
 }
 
-void image_transport::lost_comm() {
+void jpeg2pixbuf::lost_comm() {
     if (comm) {
         try {
             loader->close();
@@ -62,7 +71,7 @@ void image_transport::lost_comm() {
     }
 }
 
-bool image_transport::new_image() {
+bool jpeg2pixbuf::new_image() {
     if (isnew) {
         isnew = false;
         return true;
@@ -70,10 +79,10 @@ bool image_transport::new_image() {
     return false;
 }
 
-bool image_transport::has_comm() {
+bool jpeg2pixbuf::has_comm() {
     return comm;
 }
 
-Glib::RefPtr<Gdk::Pixbuf> image_transport::get_image() {
+Glib::RefPtr<Gdk::Pixbuf> jpeg2pixbuf::get_image() {
     return image;
 }

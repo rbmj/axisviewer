@@ -1,23 +1,30 @@
 #ifndef IMAGE_TRANSPORT_H_INC
 #define IMAGE_TRANSPORT_H_INC
-
-#include <atomic>    
+  
 #include <gdkmm/pixbuf.h>
 #include <gdkmm/pixbufloader.h>
 #include <glibmm/refptr.h>
 
 class image_transport {
 public:
+    virtual void add_data(const char*, size_t) = 0;
+    virtual void end_frame() = 0;
+    virtual void lost_comm() = 0;
+};
+
+class jpeg2pixbuf : public image_transport {
+public:
     void lost_comm();
-    void close_image();
-    void image_write(const guint8*, size_t);
+    void end_frame();
+    void add_data(const char*, size_t);
     bool new_image();
     Glib::RefPtr<Gdk::Pixbuf> get_image();
     bool has_comm();
-    image_transport();
+    jpeg2pixbuf();
+    ~jpeg2pixbuf();
 private:
     bool comm;
-    std::atomic_bool isnew;
+    bool isnew;
     Glib::RefPtr<Gdk::PixbufLoader> loader;
     Glib::RefPtr<Gdk::Pixbuf> image;
 };

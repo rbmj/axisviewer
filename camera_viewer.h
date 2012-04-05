@@ -4,6 +4,7 @@
 #include <memory>
 #include <curl/curl.h>
 
+#include "ui/image_transport.h"
 #include "stream_handler.h"
 
 struct CURL_deleter {
@@ -20,17 +21,18 @@ struct CURLM_deleter {
 
 class camera_viewer {
 public:
-	camera_viewer(const char*, stream_handler::data_sink, stream_handler::end_notifier);
+	camera_viewer(const char*);
 	~camera_viewer();
-	int recieve();
+    jpeg2pixbuf& transport();
+	int receive();
 private:
 	std::unique_ptr<CURL, CURL_deleter> curl_handle;
 	std::unique_ptr<CURL, CURLM_deleter> set;
-	stream_handler stream_handle;
+	std::unique_ptr<stream_handler> stream_handle;
+    std::unique_ptr<jpeg2pixbuf> trans;
 	int remaining;
 };
 
-class image_transport;
 void camera_thread(image_transport&);
 
 #endif
