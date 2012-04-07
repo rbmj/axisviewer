@@ -6,7 +6,7 @@ INCLUDE(FindPkgConfig)
 #hack - add -std=c++0x to CXXFLAGS
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
-set(UI_SOURCES ui/image_transport.cpp ui/main_window.cpp)
+set(UI_SOURCES ui/image_transport.cpp ui/main_window.cpp ui/no_comm.xpm)
 set(MAIN_SOURCES camera_viewer.cpp image_processing.cpp stream_handler.cpp main.cpp)
 
 set(SOURCES ${UI_SOURCES} ${MAIN_SOURCES})

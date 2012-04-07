@@ -14,19 +14,20 @@ public:
 
 class jpeg2pixbuf : public image_transport {
 public:
+    typedef sigc::signal<void> signal_lost_comm_t;
+    typedef sigc::signal<void, const Glib::RefPtr<const Gdk::Pixbuf>&> signal_new_image_t;
     void lost_comm();
     void end_frame();
     void add_data(const char*, size_t);
-    bool new_image();
-    Glib::RefPtr<Gdk::Pixbuf> get_image();
-    bool has_comm();
     jpeg2pixbuf();
     ~jpeg2pixbuf();
+    signal_lost_comm_t& signal_lost_comm();
+    signal_new_image_t& signal_new_image();
 private:
-    bool comm;
-    bool isnew;
     Glib::RefPtr<Gdk::PixbufLoader> loader;
     Glib::RefPtr<Gdk::Pixbuf> image;
+    signal_lost_comm_t m_signal_lost_comm;
+    signal_new_image_t m_signal_new_image;
 };
 
 #endif

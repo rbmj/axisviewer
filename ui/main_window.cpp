@@ -1,4 +1,5 @@
 #include "main_window.h"
+#include "no_comm.xpm"
 #include "../camera_viewer.h"
 #include "../image_processing.h"
 
@@ -74,35 +75,40 @@ guint8 options_widget::ch3_high() {
 Gtk::Widget& options_widget::widget() {
     return grid;
 }
-    
+
+void main_window::new_image(const Glib::RefPtr<const Gdk::Pixbuf>& p) {
+    picture = p->copy();
+    processed_picture = picture->copy();
+    color replace_false = make_color(0, 0, 0);
+    color replace_true = make_color(255, 0, 0);
+    color low = make_color(opts.ch1_low(), opts.ch2_low(), opts.ch3_low());
+    color high = make_color(opts.ch1_high(), opts.ch2_high(), opts.ch3_high());
+    threshold_image(processed_picture, low, high, replace_false, replace_true, opts.color_space());
+    image.set(picture);
+    processed_image.set(processed_picture);
+}
+
+void main_window::lost_comm() {
+    image.set(no_comm_image);
+    processed_image.set(no_comm_image);
+}
+
 bool main_window::idle_func() {
     //update mjpeg stream
     view->receive();
-    if (view->transport().new_image()) {
-        picture = view->transport().get_image(); //smart pointer
-        //now we have shared ownership - we will have sole ownership when
-        //trans gets a new image
-        processed_picture = picture->copy();
-        color replace_false = make_color(0, 0, 0);
-        color replace_true = make_color(255, 0, 0);
-        color low = make_color(opts.ch1_low(), opts.ch2_low(), opts.ch3_low());
-        color high = make_color(opts.ch1_high(), opts.ch2_high(), opts.ch3_high());
-        threshold_image(processed_picture, low, high, replace_false, replace_true, opts.color_space());
-        image.set(picture);
-        processed_image.set(processed_picture);
-    }
     return true;
-}
-
-bool main_window::have_comm() {
-    return view->transport().has_comm();
 }
 
 main_window::main_window() :
     img_frame("Images"),
     opt_frame("Processing Options")
 {
-    view = std::unique_ptr<camera_viewer>(new camera_viewer("http://10.6.12.11/mjpg/video.mjpg"));
+    //create no comm image
+    no_comm_image = Gdk::Pixbuf::create_from_xpm_data(no_comm_xpm);
+    //start out assuming no comm
+    lost_comm();
+    //TODO: set url to something sane based on current IP configuration
+    view = std::unique_ptr<camera_viewer>(new camera_viewer("http://10.6.12.11/mjpg/video.mjpg", "--myboundary\r\n"));
     //set border width
     set_border_width(10);
     //setup images

@@ -10,13 +10,9 @@
 #include <chrono>
 #include <vector>
 
-jpeg2pixbuf& camera_viewer::transport() {
-    return *trans;
-}
-
-camera_viewer::camera_viewer(const char * url) {
-    trans = std::unique_ptr<jpeg2pixbuf>(new jpeg2pixbuf);
-    stream_handle = std::unique_ptr<stream_handler>(new mjpeg_stream_handler(*trans, "--myboundary\r\n"));
+camera_viewer::camera_viewer(const char * url, const char * delim) :
+    stream_handle(trans, delim)
+{
 	curl_handle = std::unique_ptr<CURL, CURL_deleter>(curl_easy_init());
 	curl_easy_setopt(curl_handle.get(), CURLOPT_URL, url);
 	//full debug
@@ -44,7 +40,15 @@ int camera_viewer::receive() {
 		curl_multi_perform(set.get(), &remaining);
 	}
     else {
-        trans->lost_comm();
+        trans.lost_comm();
     }
 	return remaining;
+}
+
+jpeg2pixbuf::signal_lost_comm_t& camera_viewer::signal_lost_comm() {
+    return trans.signal_lost_comm();
+}
+
+jpeg2pixbuf::signal_new_image_t& camera_viewer::signal_new_image() {
+    return trans.signal_new_image();
 }

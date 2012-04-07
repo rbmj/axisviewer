@@ -37,8 +37,6 @@ class main_window : public Gtk::Window {
 public:
     main_window();
     ~main_window();
-    bool have_comm();
-    bool idle_func();
 protected:
     Glib::RefPtr<Gdk::Pixbuf> picture;
     Glib::RefPtr<Gdk::Pixbuf> processed_picture;
@@ -49,8 +47,12 @@ protected:
     Gtk::Frame opt_frame;
     Gtk::Grid main_window_grid;
     options_widget opts;
+    void lost_comm();
+    void new_image(const Glib::RefPtr<const Gdk::Pixbuf>&);
 private:
     std::unique_ptr<camera_viewer> view;
+    Glib::RefPtr<Gdk::Pixbuf> no_comm_image;
+    bool idle_func();
 };
     
     
