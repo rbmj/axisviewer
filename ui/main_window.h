@@ -4,9 +4,14 @@
 #include <gtkmm/window.h>
 #include <gtkmm/image.h>
 #include <gtkmm/grid.h>
+#include <gtkmm/box.h>
 #include <gtkmm/frame.h>
 #include <gtkmm/comboboxtext.h>
 #include <gtkmm/spinbutton.h>
+#include <gtkmm/action.h>
+#include <gtkmm/menubar.h>
+#include <gtkmm/menuitem.h>
+#include <gtkmm/menu.h>
 #include <gdkmm/pixbuf.h>
 #include <glibmm/refptr.h>
 #include <thread>
@@ -46,13 +51,27 @@ protected:
     Gtk::Frame img_frame;
     Gtk::Frame opt_frame;
     Gtk::Grid main_window_grid;
+    Gtk::Grid main_grid;
+    //menu bar
+    Gtk::MenuBar menubar;
+    Gtk::MenuItem configitem;
+    Gtk::Menu configmenu;
+    Gtk::MenuItem setip;
     options_widget opts;
     void lost_comm();
     void new_image(const Glib::RefPtr<const Gdk::Pixbuf>&);
+    //actions
+    Glib::RefPtr<Gtk::Action> ip_config_action;
+    void set_ip();
 private:
     std::unique_ptr<camera_viewer> view;
     Glib::RefPtr<Gdk::Pixbuf> no_comm_image;
     bool idle_func();
+    //url bits
+    std::string http;
+    std::string ip;
+    std::string path;
+    std::string delim;
 };
     
     

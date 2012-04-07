@@ -1,4 +1,5 @@
 #include "main_window.h"
+#include "url_chooser.h"
 #include "no_comm.xpm"
 #include "../camera_viewer.h"
 #include "../image_processing.h"
@@ -100,6 +101,13 @@ bool main_window::idle_func() {
     return true;
 }
 
+void main_window::set_ip() {
+    url_chooser choose(ip, path, delim);
+    choose.run();
+    std::string url = http + ip + path;
+    view->reconnect(url.c_str(), path.c_str());
+}
+
 main_window::main_window() :
     img_frame("Images"),
     opt_frame("Processing Options")
@@ -110,7 +118,21 @@ main_window::main_window() :
     image.set(no_comm_image);
     processed_image.set(no_comm_image);
     //TODO: set url to something sane based on current IP configuration
-    view = std::unique_ptr<camera_viewer>(new camera_viewer("http://10.6.12.11/mjpg/video.mjpg", "--myboundary\r\n"));
+    http = "http://";
+    ip = "10.6.12.11";
+    path = "/mjpg/video.mjpg";
+    delim = "--myboundary\r\n";
+    view = std::unique_ptr<camera_viewer>(new camera_viewer(http + ip + path, delim));
+    //setup configuration
+    ip_config_action = Gtk::Action::create("Set Camera IP");
+    ip_config_action->signal_activate().connect(sigc::mem_fun(*this, &main_window::set_ip));
+    setip.set_related_action(ip_config_action);
+    //setup menu bar
+    menubar.prepend(configitem);
+    configitem.set_label("Config");
+    configitem.set_submenu(configmenu);
+    configmenu.prepend(setip);
+    setip.set_label("Set Camera IP");
     //set border width
     set_border_width(10);
     //setup images
@@ -124,7 +146,11 @@ main_window::main_window() :
     main_window_grid.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
     main_window_grid.add(img_frame);
     main_window_grid.add(opt_frame);
-    add(main_window_grid);
+    //setup main grid
+    main_grid.set_orientation(Gtk::ORIENTATION_VERTICAL);
+    main_grid.add(menubar);
+    main_grid.add(main_window_grid);
+    add(main_grid);
     show_all();
     //connect signals
     view->signal_lost_comm().connect(sigc::mem_fun(*this, &main_window::lost_comm));

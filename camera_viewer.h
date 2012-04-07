@@ -21,7 +21,7 @@ struct CURLM_deleter {
 
 class camera_viewer {
 public:
-	camera_viewer(const char*, const char*);
+	camera_viewer(const std::string&, const std::string&);
 	~camera_viewer();
     jpeg2pixbuf::signal_lost_comm_t& signal_lost_comm();
     jpeg2pixbuf::signal_new_image_t& signal_new_image();
@@ -33,7 +33,8 @@ private:
     jpeg2pixbuf trans;
 	mjpeg_stream_handler stream_handle;
 	int remaining;
-    const char * m_url;
+    std::string m_url;
+    std::string m_delim;
     void init_socket();
 };
 

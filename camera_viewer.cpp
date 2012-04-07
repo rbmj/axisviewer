@@ -10,10 +10,11 @@
 #include <chrono>
 #include <vector>
 
-camera_viewer::camera_viewer(const char * url, const char * delim) :
+camera_viewer::camera_viewer(const std::string& url, const std::string& delim) :
     stream_handle(trans, delim)
 {
     m_url = url;
+    m_delim = delim;
     init_socket();
 	//create multi object for nonblocking input/output
 	set = std::unique_ptr<CURL, CURLM_deleter>(curl_multi_init());
@@ -26,7 +27,7 @@ camera_viewer::camera_viewer(const char * url, const char * delim) :
 
 void camera_viewer::init_socket() {
 	curl_handle = std::unique_ptr<CURL, CURL_deleter>(curl_easy_init());
-	curl_easy_setopt(curl_handle.get(), CURLOPT_URL, m_url);
+	curl_easy_setopt(curl_handle.get(), CURLOPT_URL, m_url.c_str());
 	//full debug
 	curl_easy_setopt(curl_handle.get(), CURLOPT_VERBOSE, 0L);
 	//disable progress
@@ -41,15 +42,13 @@ void camera_viewer::reconnect(const char * url, const char * delim) {
         m_url = url;
     }
     if (delim) {
-        stream_handle.reset(delim);
-    }
-    else {
-        stream_handle.reset();
+        m_delim = delim;
     }
     remaining = 0;
     curl_multi_remove_handle(set.get(), curl_handle.get());
     init_socket();
     trans.end_frame();
+    stream_handle.reset(m_delim);
 }
     
 
