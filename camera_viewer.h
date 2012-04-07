@@ -25,13 +25,16 @@ public:
 	~camera_viewer();
     jpeg2pixbuf::signal_lost_comm_t& signal_lost_comm();
     jpeg2pixbuf::signal_new_image_t& signal_new_image();
-	int receive();
+	void receive();
+    void reconnect(const char * = nullptr, const char * = nullptr);
 private:
 	std::unique_ptr<CURL, CURL_deleter> curl_handle;
 	std::unique_ptr<CURL, CURLM_deleter> set;
     jpeg2pixbuf trans;
 	mjpeg_stream_handler stream_handle;
 	int remaining;
+    const char * m_url;
+    void init_socket();
 };
 
 #endif

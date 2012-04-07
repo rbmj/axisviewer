@@ -91,6 +91,7 @@ void main_window::new_image(const Glib::RefPtr<const Gdk::Pixbuf>& p) {
 void main_window::lost_comm() {
     image.set(no_comm_image);
     processed_image.set(no_comm_image);
+    view->reconnect();
 }
 
 bool main_window::idle_func() {
@@ -105,8 +106,9 @@ main_window::main_window() :
 {
     //create no comm image
     no_comm_image = Gdk::Pixbuf::create_from_xpm_data(no_comm_xpm);
-    //start out assuming no comm
-    lost_comm();
+    //initialize pictures to no_comm_image
+    image.set(no_comm_image);
+    processed_image.set(no_comm_image);
     //TODO: set url to something sane based on current IP configuration
     view = std::unique_ptr<camera_viewer>(new camera_viewer("http://10.6.12.11/mjpg/video.mjpg", "--myboundary\r\n"));
     //set border width

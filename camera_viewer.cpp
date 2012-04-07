@@ -13,15 +13,8 @@
 camera_viewer::camera_viewer(const char * url, const char * delim) :
     stream_handle(trans, delim)
 {
-	curl_handle = std::unique_ptr<CURL, CURL_deleter>(curl_easy_init());
-	curl_easy_setopt(curl_handle.get(), CURLOPT_URL, url);
-	//full debug
-	curl_easy_setopt(curl_handle.get(), CURLOPT_VERBOSE, 0L);
-	//disable progress
-	curl_easy_setopt(curl_handle.get(), CURLOPT_NOPROGRESS, 1L);
-	//set callback
-	curl_easy_setopt(curl_handle.get(), CURLOPT_WRITEFUNCTION, stream_handler::write);
-	curl_easy_setopt(curl_handle.get(), CURLOPT_WRITEDATA, (void*)&stream_handle);
+    m_url = url;
+    init_socket();
 	//create multi object for nonblocking input/output
 	set = std::unique_ptr<CURL, CURLM_deleter>(curl_multi_init());
 	if (!set) {
@@ -31,18 +24,46 @@ camera_viewer::camera_viewer(const char * url, const char * delim) :
 	remaining = 1;
 }
 
+void camera_viewer::init_socket() {
+	curl_handle = std::unique_ptr<CURL, CURL_deleter>(curl_easy_init());
+	curl_easy_setopt(curl_handle.get(), CURLOPT_URL, m_url);
+	//full debug
+	curl_easy_setopt(curl_handle.get(), CURLOPT_VERBOSE, 0L);
+	//disable progress
+	curl_easy_setopt(curl_handle.get(), CURLOPT_NOPROGRESS, 1L);
+	//set callback
+	curl_easy_setopt(curl_handle.get(), CURLOPT_WRITEFUNCTION, stream_handler::write);
+	curl_easy_setopt(curl_handle.get(), CURLOPT_WRITEDATA, (void*)&stream_handle);
+}
+
+void camera_viewer::reconnect(const char * url, const char * delim) {
+    if (url) {
+        m_url = url;
+    }
+    if (delim) {
+        stream_handle.reset(delim);
+    }
+    else {
+        stream_handle.reset();
+    }
+    remaining = 0;
+    curl_multi_remove_handle(set.get(), curl_handle.get());
+    init_socket();
+    trans.end_frame();
+}
+    
+
 camera_viewer::~camera_viewer() {
 	curl_multi_remove_handle(set.get(), curl_handle.get());
 }
 
-int camera_viewer::receive() {
-	if (remaining > 0) {
+void camera_viewer::receive() {
+	if (remaining) {
 		curl_multi_perform(set.get(), &remaining);
 	}
     else {
         trans.lost_comm();
     }
-	return remaining;
 }
 
 jpeg2pixbuf::signal_lost_comm_t& camera_viewer::signal_lost_comm() {

@@ -19,6 +19,16 @@ mjpeg_stream_handler::mjpeg_stream_handler(image_transport& t, const std::string
     state = SEARCH; //start out looking for delim
 }
 
+void mjpeg_stream_handler::reset() {
+    state = SEARCH;
+    buf.clear();
+}
+
+void mjpeg_stream_handler::reset(const std::string& newdelim) {
+    delim = newdelim;
+    reset();
+}
+
 void mjpeg_stream_handler::process_data() {
     if (state == SEARCH) {
         //looking for delim - std::end(delim)-1 so we don't include null terminator

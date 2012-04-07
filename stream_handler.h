@@ -18,6 +18,7 @@ public:
     virtual size_t add_data(const char*, size_t) = 0; //need to copy buffer
     static size_t write(void*, size_t, size_t, void*);
     stream_handler(image_transport& t) : trans(t) {}
+    void reset();
 };
 
 class mjpeg_stream_handler : public stream_handler {
@@ -25,6 +26,8 @@ public:
     mjpeg_stream_handler(image_transport&, const std::string&);
 	size_t add_data(const char*, size_t); //const as we need to copy the buffer
     void process_data();
+    void reset();
+    void reset(const std::string&);
 private:
     std::string delim;
     std::vector<char> buf;
