@@ -124,6 +124,9 @@ main_window::main_window() :
     main_window_grid.add(opt_frame);
     add(main_window_grid);
     show_all();
+    //connect signals
+    view->signal_lost_comm().connect(sigc::mem_fun(*this, &main_window::lost_comm));
+    view->signal_new_image().connect(sigc::mem_fun(*this, &main_window::new_image));
     Glib::signal_idle().connect(sigc::mem_fun(*this, &main_window::idle_func));
 }
 
