@@ -17,11 +17,11 @@ add_executable(axisviewer ${SOURCES})
 if(${PKG_CONFIG_FOUND})
 	#use pkg-config if available
 	pkg_check_modules(CURL REQUIRED libcurl)
-	pkg_check_modules(GTKMM REQUIRED gtkmm-3.0)
+	pkg_search_module(GTKMM REQUIRED gtkmm-3.0 gtkmm-2.4)
 	include_directories(${GTKMM_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
 	target_link_libraries(axisviewer ${GTKMM_LIBRARIES} ${CURL_LIBRARIES})
 else()
-	find_package(GTK3 REQUIRED gtkmm)
+	find_package(GTK2 REQUIRED gtkmm) #there's no find module in my cmake install
 	find_package(CURL REQUIRED)
 	include_directories(${GTK3_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
 	target_link_libraries(axisviewer ${GTK3_LIBRARIES} ${CURL_LIBRARY})
