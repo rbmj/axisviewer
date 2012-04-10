@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <curl/curl.h>
+#include <chrono>
 
 #include "ui/image_transport.h"
 #include "stream_handler.h"
@@ -35,7 +36,11 @@ private:
 	int remaining;
     std::string m_url;
     std::string m_delim;
+    std::chrono::system_clock::time_point deadline;
+    bool has_comm;
+    void received_data_sink(size_t);
     void init_socket();
+    static const std::chrono::milliseconds timeout;
 };
 
 #endif

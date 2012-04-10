@@ -12,6 +12,8 @@
 class stream_handler {
 private:
     image_transport& trans;
+    sigc::signal<void, size_t> received_data;
+    size_t obj_write(void*, size_t);
 protected:
     image_transport& transport() { return trans; }
 public:
@@ -19,6 +21,7 @@ public:
     static size_t write(void*, size_t, size_t, void*);
     stream_handler(image_transport& t) : trans(t) {}
     void reset();
+    sigc::signal<void, size_t>& signal_received_data();
 };
 
 class mjpeg_stream_handler : public stream_handler {

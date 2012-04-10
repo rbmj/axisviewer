@@ -8,7 +8,18 @@
 
 size_t stream_handler::write(void * ptr, size_t size, size_t nmemb, void * o) {
 	size_t numbytes = size * nmemb;
-	return (((stream_handler*)o)->add_data((const char*)ptr, numbytes));
+	return (((stream_handler*)o)->obj_write(ptr, numbytes));
+}
+
+size_t stream_handler::obj_write(void * ptr, size_t numbytes) {
+    if (numbytes) {
+        received_data.emit(numbytes);
+    }
+    return add_data((const char*)ptr, numbytes);
+}
+
+sigc::signal<void, size_t>& stream_handler::signal_received_data() {
+    return received_data;
 }
 
 mjpeg_stream_handler::mjpeg_stream_handler(image_transport& t, const std::string& s) :

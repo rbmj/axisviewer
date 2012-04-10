@@ -105,7 +105,9 @@ void main_window::set_ip() {
     url_chooser choose(ip, path, delim);
     choose.run();
     std::string url = http + ip + path;
-    view->reconnect(url.c_str(), path.c_str());
+    view->reconnect(url.c_str(), delim.c_str());
+    image.set(no_comm_image);
+    processed_image.set(no_comm_image);
 }
 
 main_window::main_window() :

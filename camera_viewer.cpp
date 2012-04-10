@@ -10,9 +10,12 @@
 #include <chrono>
 #include <vector>
 
+const std::chrono::milliseconds camera_viewer::timeout(1000); //timeout 1sec
+
 camera_viewer::camera_viewer(const std::string& url, const std::string& delim) :
     stream_handle(trans, delim)
 {
+    has_comm = false;
     m_url = url;
     m_delim = delim;
     init_socket();
@@ -23,6 +26,7 @@ camera_viewer::camera_viewer(const std::string& url, const std::string& delim) :
 	}
 	curl_multi_add_handle(set.get(), curl_handle.get());
 	remaining = 1;
+    stream_handle.signal_received_data().connect(sigc::mem_fun(*this, &camera_viewer::received_data_sink));
 }
 
 void camera_viewer::init_socket() {
@@ -44,11 +48,13 @@ void camera_viewer::reconnect(const char * url, const char * delim) {
     if (delim) {
         m_delim = delim;
     }
-    remaining = 0;
+    remaining = 1;
     curl_multi_remove_handle(set.get(), curl_handle.get());
     init_socket();
+    curl_multi_add_handle(set.get(), curl_handle.get());
     trans.end_frame();
     stream_handle.reset(m_delim);
+    has_comm = false;
 }
     
 
@@ -57,12 +63,18 @@ camera_viewer::~camera_viewer() {
 }
 
 void camera_viewer::receive() {
-	if (remaining) {
+	if (remaining && (!has_comm || (std::chrono::system_clock::now() < deadline))) {
 		curl_multi_perform(set.get(), &remaining);
 	}
     else {
         trans.lost_comm();
+        has_comm = false;
     }
+}
+
+void camera_viewer::received_data_sink(size_t bytes) {
+    deadline = std::chrono::system_clock::now() + timeout;
+    has_comm = true;
 }
 
 jpeg2pixbuf::signal_lost_comm_t& camera_viewer::signal_lost_comm() {
