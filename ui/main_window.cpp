@@ -15,13 +15,28 @@ options_widget::options_widget() {
     color_mode.append("HSV");
     color_mode.append("RGB");
     color_mode.set_active_text("HSL");
+#ifndef USE_DEPRECATED_GTKMM_API
     grid.attach(color_mode, 0, 0, 2, 1);
+#endif
     for (int i = 0; i < 6; i++) {
         spinbuttons[i].set_range(0, 255);
         spinbuttons[i].set_increments(1, 16);
+#ifndef USE_DEPRECATED_GTKMM_API
         grid.attach(spinbuttons[i], i % 2, (i/2)+1, 1, 1);
+#endif
     }
-    
+#ifdef USE_DEPRECATED_GTKMM_API
+    ch1_box.add(spinbuttons[0]);
+    ch1_box.add(spinbuttons[1]);
+    ch2_box.add(spinbuttons[2]);
+    ch2_box.add(spinbuttons[3]);
+    ch3_box.add(spinbuttons[4]);
+    ch3_box.add(spinbuttons[5]);
+    box.add(color_mode);
+    box.add(ch1_box);
+    box.add(ch2_box);
+    box.add(ch3_box);
+#endif
 }
 
 options_widget::~options_widget() {
@@ -74,7 +89,11 @@ guint8 options_widget::ch3_high() {
 }
 
 Gtk::Widget& options_widget::widget() {
+#ifndef USE_DEPRECATED_GTKMM_API
     return grid;
+#else
+    return box;
+#endif
 }
 
 void main_window::new_image(const Glib::RefPtr<const Gdk::Pixbuf>& p) {
@@ -126,9 +145,7 @@ main_window::main_window() :
     delim = "--myboundary\r\n";
     view = std::unique_ptr<camera_viewer>(new camera_viewer(http + ip + path, delim));
     //setup configuration
-    ip_config_action = Gtk::Action::create("Set Camera IP");
-    ip_config_action->signal_activate().connect(sigc::mem_fun(*this, &main_window::set_ip));
-    setip.set_related_action(ip_config_action);
+    setip.signal_activate().connect(sigc::mem_fun(*this, &main_window::set_ip));
     //setup menu bar
     menubar.prepend(configitem);
     configitem.set_label("Config");
@@ -138,21 +155,27 @@ main_window::main_window() :
     //set border width
     set_border_width(10);
     //setup images
-    img_grid.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
-    img_grid.add(image);
-    img_grid.add(processed_image);
-    img_frame.add(img_grid);
+#ifndef USE_DEPRECATED_GTKMM_API
+    img_box.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
+#endif
+    img_box.add(image);
+    img_box.add(processed_image);
+    img_frame.add(img_box);
     //setup options
     opt_frame.add(opts.widget());
     //setup main grid
-    main_window_grid.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
-    main_window_grid.add(img_frame);
-    main_window_grid.add(opt_frame);
+#ifndef USE_DEPRECATED_GTKMM_API
+    main_window_box.set_orientation(Gtk::ORIENTATION_HORIZONTAL);
+#endif
+    main_window_box.add(img_frame);
+    main_window_box.add(opt_frame);
     //setup main grid
-    main_grid.set_orientation(Gtk::ORIENTATION_VERTICAL);
-    main_grid.add(menubar);
-    main_grid.add(main_window_grid);
-    add(main_grid);
+#ifndef USE_DEPRECATED_GTKMM_API
+    main_box.set_orientation(Gtk::ORIENTATION_VERTICAL);
+#endif
+    main_box.add(menubar);
+    main_box.add(main_window_box);
+    add(main_box);
     show_all();
     //connect signals
     view->signal_lost_comm().connect(sigc::mem_fun(*this, &main_window::lost_comm));

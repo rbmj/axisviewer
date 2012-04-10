@@ -17,6 +17,7 @@ url_chooser::url_chooser(std::string& i, std::string& u, std::string& d) :
     ip.signal_focus_out_event().connect(sigc::mem_fun(*this, &url_chooser::ip_changed));
     url.signal_focus_out_event().connect(sigc::mem_fun(*this, &url_chooser::url_changed));
     delim.signal_focus_out_event().connect(sigc::mem_fun(*this, &url_chooser::delim_changed));
+#ifndef USE_DEPRECATED_GTKMM_API
     //setup frame for advanced options
     //attach url entry
     advanced_grid.attach(url_l, 0, 0, 1, 1);
@@ -34,6 +35,20 @@ url_chooser::url_chooser(std::string& i, std::string& u, std::string& d) :
     content.attach(advanced_opts, 0, 1, 2, 1);
     //add content
     get_content_area()->add(content);
+#else
+    ip_box.add(ip_l);
+    ip_box.add(ip);
+    url_box.add(url_l);
+    url_box.add(url);
+    delim_box.add(delim_l);
+    delim_box.add(delim);
+    advanced_box.add(url_box);
+    advanced_box.add(delim_box);
+    advanced_opts.add(advanced_box);
+    content.add(ip_box);
+    content.add(advanced_opts);
+    get_vbox()->add(content);
+#endif
     //add button
     add_button("OK", 0);
     show_all_children();

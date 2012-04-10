@@ -11,23 +11,55 @@ set(MAIN_SOURCES camera_viewer.cpp image_processing.cpp stream_handler.cpp main.
 
 set(SOURCES ${UI_SOURCES} ${MAIN_SOURCES})
 
-add_executable(axisviewer ${SOURCES})
-
 #dependencies
 if(${PKG_CONFIG_FOUND})
 	#use pkg-config if available
 	pkg_check_modules(CURL REQUIRED libcurl)
-	#pkg_search_module(GTKMM REQUIRED gtkmm-3.0 gtkmm-2.4) #no grid.h for gtkmm-2.4
+    #search for gtkmm 3
+    pkg_check_modules(GTKMM gtkmm-3.0)
+    if(${GTKMM_FOUND})
+        set(GTKMM_API_VERSION 3)
+    else(${GTKMM_FOUND})
+        #look for gtkmm 2
+        pkg_check_modules(GTKMM gtkmm-2.4)
+        if (${GTKMM_FOUND})
+            set(GTKMM_API_VERSION 2)
+        else(${GTKMM_FOUND})
+            message(SEND_ERROR "No compatible version of GTKMM found")
+        endif(${GTKMM_FOUND})
+    endif(${GTKMM_FOUND})
 	#provide backwards compatibility?
-	pkg_search_module(GTKMM REQUIRED gtkmm-3.0)
-	include_directories(${GTKMM_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
-	target_link_libraries(axisviewer ${GTKMM_LIBRARIES} ${CURL_LIBRARIES})
-else()
-	find_package(GTK3 REQUIRED gtkmm) #this'll probably fail TODO: Fix
+else(${PKG_CONFIG_FOUND})
+    #search for gtk2 first as gtk3 will probably fail
+    find_package(GTK2 COMPONENTS gtkmm)
+    if(${GTK2_FOUND})
+        set(GTKMM_INCLUDE_DIRS ${GTK2_INCLUDE_DIRS})
+        set(GTKMM_LIBRARIES ${GTK2_LIBRARIES})
+        set(GTKMM_API_VERSION 2)
+    else(${GTK2_FOUND})
+        find_package(GTK3 COMPONENTS gtkmm) #this'll probably fail TODO: Fix
+        if(${GTK3_FOUND})
+            set(GTKMM_INCLUDE_DIRS ${GTK3_INCLUDE_DIRS})
+            set(GTKMM_LIBRARIES ${GTK3_LIBRARIES})
+            set(GTKMM_API_VERSION 3)
+        else(${GTK3_FOUND})
+            message(SEND_ERROR "No compatible version of GTKMM found")
+        endif(${GTK3_FOUND})
+    endif(${GTK2_FOUND})
 	#again, needs fixes to work with GTKMM 2.4
 	find_package(CURL REQUIRED)
-	include_directories(${GTK3_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
-	target_link_libraries(axisviewer ${GTK3_LIBRARIES} ${CURL_LIBRARY})
-endif()
+    set(CURL_LIBRARIES ${CURL_LIBRARY})
+endif(${PKG_CONFIG_FOUND})
 
+if(${GTKMM_API_VERSION} EQUAL 2)
+    set(USE_DEPRECATED_GTKMM_API 1)
+endif(${GTKMM_API_VERSION} EQUAL 2)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}) #for #include <config.h>
+
+add_executable(axisviewer ${SOURCES})
+
+include_directories(${GTKMM_INCLUDE_DIRS} ${CURL_INCLUDE_DIRS})
+target_link_libraries(axisviewer ${GTKMM_LIBRARIES} ${CURL_LIBRARIES})
 
