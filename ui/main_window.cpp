@@ -10,11 +10,16 @@ const char URL[] = "http://10.6.12.11/mjpg/video.mjpg";
 
 options_widget::options_widget() {
     spinbuttons = new Gtk::SpinButton[6];
-    color_mode.append("HSL");
-    color_mode.append("HSI");
-    color_mode.append("HSV");
-    color_mode.append("RGB");
-    color_mode.set_active_text("HSL");
+    model = Gtk::ListStore::create(record);
+    color_mode.set_model(model);
+    //fill rows
+    for (const auto& str : { "HSL", "HSI", "HSV", "RGB" }) {
+        Gtk::TreeModel::Row row = *(model->append());
+        row[record.text] = str;
+    }
+    //color_mode.set_active_text("HSL");
+    color_mode.set_active(0);
+    color_mode.pack_start(record.text);
 #ifndef USE_DEPRECATED_GTKMM_API
     grid.attach(color_mode, 0, 0, 2, 1);
 #endif
@@ -44,7 +49,8 @@ options_widget::~options_widget() {
 }
 
 COLOR_SPACE options_widget::color_space() {
-    Glib::ustring s = color_mode.get_active_text();
+    Gtk::TreeModel::Row r = *(color_mode.get_active());
+    Glib::ustring s = r[record.text];
     COLOR_SPACE ret;
     if (s == "HSL") {
         ret = COLOR_SPACE::HSL;

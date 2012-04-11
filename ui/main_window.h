@@ -12,7 +12,8 @@
 #include <gtkmm/window.h>
 #include <gtkmm/image.h>
 #include <gtkmm/frame.h>
-#include <gtkmm/comboboxtext.h>
+#include <gtkmm/combobox.h>
+#include <gtkmm/liststore.h>
 #include <gtkmm/spinbutton.h>
 #include <gtkmm/menubar.h>
 #include <gtkmm/menuitem.h>
@@ -46,7 +47,14 @@ protected:
     Gtk::HBox ch3_box;
     Gtk::VBox box;
 #endif
-    Gtk::ComboBoxText color_mode;
+    Gtk::ComboBox color_mode;
+    Glib::RefPtr<Gtk::ListStore> model;
+    class record_t : public Gtk::TreeModel::ColumnRecord {
+    public:
+        Gtk::TreeModelColumn<Glib::ustring> text;
+        record_t() { add(text); }
+    };
+    record_t record;
     Gtk::SpinButton * spinbuttons;
 };
 
