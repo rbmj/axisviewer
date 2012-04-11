@@ -48,7 +48,6 @@ else(${PKG_CONFIG_FOUND})
     endif(${GTK2_FOUND})
 	#again, needs fixes to work with GTKMM 2.4
 	find_package(CURL REQUIRED)
-    set(CURL_LIBRARIES ${CURL_LIBRARY})
 endif(${PKG_CONFIG_FOUND})
 
 if(${GTKMM_API_VERSION} EQUAL 2)
